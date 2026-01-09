@@ -227,19 +227,3 @@ curl -X POST http://localhost:3000/auth/logout \
    - Remove a chave do Redis, invalidando a sessão imediatamente
 
 ---
-
-## Observações de segurança e finalidade
-
-- Este projeto tem caráter educacional, para demonstrar conceitos de autenticação moderna e controle de sessão server-side.
-- Em produção:
-  - Use segredos fortes e armazenamento seguro (ex.: vaults ou variáveis de ambiente gerenciadas).
-  - Considere usar HTTPS, proteção contra CSRF onde aplicável, rate limiting e monitoramento.
-  - Ajuste políticas de expiração e rotação de refresh tokens conforme requisitos de segurança.
-  - Garanta validação e sanitização de entradas de usuário.
-
----
-
-Se quiser, eu posso:
-- Converter este README em um arquivo pronto para commit no repositório,
-- Adicionar badges, ou
-- Expandir a seção de arquitetura com diagramas e exemplos de payloads mais detalhados.
