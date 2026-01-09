@@ -1,71 +1,110 @@
 # 🔐 API de Autenticação com Fastify, JWT e Redis
 
-Este projeto implementa um fluxo completo de autenticação utilizando **Fastify**, **JWT (Access Token + Refresh Token)** e **Redis** (executado via Docker) para gerenciamento de sessão com **TTL**.
-
-O objetivo é demonstrar, de forma prática, conceitos vistos em sala de aula sobre autenticação, controle de sessão, renovação de tokens e invalidação manual.
+Uma implementação educativa e profissional de um fluxo de autenticação moderno usando Fastify, JWT (Access + Refresh tokens) e Redis (para sessão server-side). O projeto demonstra geração e renovação de tokens, controle de sessão com TTL, e invalidação de sessão no logout.
 
 ---
 
-## 🚀 Tecnologias Utilizadas
+## Índice
+
+- [Recursos](#recursos)
+- [Tecnologias](#tecnologias)
+- [Estrutura do projeto](#estrutura-do-projeto)
+- [Pré-requisitos](#pré-requisitos)
+- [Instalação e execução](#instalação-e-execução)
+- [Variáveis de ambiente](#variáveis-de-ambiente)
+- [Endpoints principais](#endpoints-principais)
+- [Exemplos (cURL)](#exemplos-curl)
+- [Fluxo de autenticação](#fluxo-de-autenticação)
+- [Observações de segurança e finalidade](#observações-de-segurança-e-finalidade)
+
+---
+
+## Recursos
+
+- Login com Access Token (curta duração)
+- Geração e uso de Refresh Token (longa duração)
+- Armazenamento da sessão (Access Token) no Redis com TTL
+- Rotas protegidas com validação de JWT e sessão no Redis
+- Renovação de sessão via Refresh Token
+- Logout com invalidação de sessão no Redis
+- Tratamento de erros e boas práticas básicas de segurança
+
+---
+
+## Tecnologias
 
 - Node.js
 - TypeScript
-- Fastify
-- JWT (jsonwebtoken)
-- Redis
-- Docker
-- bcryptjs
+- [Fastify](https://www.fastify.io/)
+- JWT (`jsonwebtoken`)
+- Redis (via Docker para desenvolvimento)
+- `bcryptjs` (hash de senhas)
+- Docker (para execução do Redis)
 
 ---
 
-## 🎯 Funcionalidades
-
-- Login com Access Token (curta duração)
-- Geração de Refresh Token (longa duração)
-- Armazenamento do Access Token no Redis com TTL
-- Validação de token e sessão em rotas protegidas
-- Renovação de sessão via Refresh Token
-- Logout com invalidação de sessão
-- Tratamento de erros e boas práticas de segurança
-
----
-
-## 📦 Estrutura do Projeto
+## Estrutura do projeto
 
 src/
 ├── controllers/
-│ └── authController.ts
+│   └── authController.ts
 ├── routes/
-│ └── authRoutes.ts
+│   └── authRoutes.ts
 ├── services/
-│ └── tokenServices.ts
+│   └── tokenServices.ts
 ├── redis/
-│ └── clienteRedis.ts
+│   └── clienteRedis.ts
 ├── types/
-│ └── user.ts
+│   └── user.ts
 ├── users.json
 ├── server.ts
 .env
 
-yaml
-Copiar código
+---
+
+## Pré-requisitos
+
+- Node.js (recomendado versão 16+)
+- npm ou yarn
+- Docker (apenas para executar o Redis em ambiente de desenvolvimento)
 
 ---
 
-## ⚙️ Configuração do Ambiente
+## Instalação e execução
 
-### 1️⃣ Clonar o repositório
-
+1. Clone o repositório
 ```bash
-git clone https://github.com/seu-usuario/api-auth-fastify-redis.git
-cd api-auth-fastify-redis
-2️⃣ Instalar dependências
-bash
-Copiar código
+git clone https://github.com/Ikarorj/autentica-o-profissional-fastify-jwt-redis.git
+cd autentica-o-profissional-fastify-jwt-redis
+```
+
+2. Instale as dependências
+```bash
 npm install
-3️⃣ Criar o arquivo .env
-env
-Copiar código
+```
+
+3. Crie o arquivo `.env` na raiz do projeto com as variáveis descritas abaixo.
+
+4. Inicie o Redis (opcional — necessário se `USE_REDIS=true`)
+```bash
+docker run -d --name redis-auth -p 6379:6379 redis
+# Verifique se está rodando:
+docker ps
+```
+
+5. Execute a aplicação
+```bash
+npm run dev
+```
+
+A API estará disponível em: http://localhost:3000 (ou na porta definida em `.env`)
+
+---
+
+## Variáveis de ambiente
+
+Exemplo mínimo de `.env`:
+```
 PORT=3000
 
 ACCESS_SECRET=access-secret
@@ -75,130 +114,132 @@ ACCESS_TTL_SECONDS=30
 
 USE_REDIS=true
 REDIS_URL=redis://127.0.0.1:6379
-4️⃣ Subir o Redis com Docker
-bash
-Copiar código
-docker run -d --name redis-auth -p 6379:6379 redis
-Verifique se está rodando:
+```
 
-bash
-Copiar código
-docker ps
-5️⃣ Rodar a aplicação
-bash
-Copiar código
-npm run dev
-A API estará disponível em:
+- PORT: porta onde a API será exposta.
+- ACCESS_SECRET: segredo para assinar o Access Token.
+- REFRESH_SECRET: segredo para assinar o Refresh Token.
+- ACCESS_TTL_SECONDS: tempo de vida do Access Token (em segundos) e TTL sincronizado no Redis.
+- USE_REDIS: habilita o uso de Redis para sessões (true/false).
+- REDIS_URL: URL de conexão com o Redis.
 
-arduino
-Copiar código
-http://localhost:3000
-📌 Endpoints
-🔐 POST /auth/login
-Realiza o login do usuário e gera os tokens.
+---
 
-Body:
+## Endpoints principais
 
-json
-Copiar código
-{
-  "email": "aluno@ifpi.edu.br",
-  "password": "123456"
-}
-Resposta:
+- POST /auth/login  
+  Realiza o login do usuário e retorna `accessToken` e `refreshToken`.
 
-json
-Copiar código
-{
-  "accessToken": "...",
-  "refreshToken": "..."
-}
-🔒 GET /auth/protected
-Rota protegida que valida:
+  Body:
+  ```json
+  {
+    "email": "aluno@ifpi.edu.br",
+    "password": "123456"
+  }
+  ```
 
-Access Token (JWT)
+  Resposta:
+  ```json
+  {
+    "accessToken": "...",
+    "refreshToken": "..."
+  }
+  ```
 
-Sessão ativa no Redis
+- GET /auth/protected  
+  Rota protegida que exige:
+  - Authorization: Bearer <accessToken>
+  - Token válido e sessão ativa no Redis
 
-Header:
+  Header:
+  ```
+  Authorization: Bearer <accessToken>
+  ```
 
-makefile
-Copiar código
-Authorization: Bearer <accessToken>
-🔁 POST /auth/refresh
-Renova a sessão utilizando o Refresh Token.
+- POST /auth/refresh  
+  Renova a sessão usando o `refreshToken`.
 
-Body:
+  Body:
+  ```json
+  {
+    "refreshToken": "..."
+  }
+  ```
 
-json
-Copiar código
-{
-  "refreshToken": "..."
-}
-🚪 POST /auth/logout
-Encerra a sessão do usuário.
+- POST /auth/logout  
+  Encerra (invalida) a sessão do usuário removendo a chave do Redis.
 
-Header:
+  Header:
+  ```
+  Authorization: Bearer <accessToken>
+  ```
 
-makefile
-Copiar código
-Authorization: Bearer <accessToken>
-🧪 Exemplos de Uso (cURL)
-Login
-bash
-Copiar código
+---
+
+## Exemplos (cURL)
+
+Login:
+```bash
 curl -X POST http://localhost:3000/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"aluno@ifpi.edu.br","password":"123456"}'
-Rota protegida
-bash
-Copiar código
+```
+
+Acessar rota protegida:
+```bash
 curl http://localhost:3000/auth/protected \
   -H "Authorization: Bearer <accessToken>"
-Refresh Token
-bash
-Copiar código
+```
+
+Refresh Token:
+```bash
 curl -X POST http://localhost:3000/auth/refresh \
   -H "Content-Type: application/json" \
   -d '{"refreshToken":"<refreshToken>"}'
-Logout
-bash
-Copiar código
+```
+
+Logout:
+```bash
 curl -X POST http://localhost:3000/auth/logout \
   -H "Authorization: Bearer <accessToken>"
-🧠 Fluxo de Autenticação
-🔑 Geração de Tokens
-Implementação: src/services/tokenServices.ts
+```
 
-🗄️ Sessão no Redis
-Chave: token:<userId>
+---
 
-TTL sincronizado com o Access Token
+## Fluxo de autenticação (resumo)
 
-✅ Validação
-JWT válido
+1. Geração de tokens
+   - Implementação principal: `src/services/tokenServices.ts`  
+   - Ao autenticar credenciais válidas, são criados `accessToken` e `refreshToken`.
 
-Token presente no Redis
+2. Sessão no Redis
+   - Chave: `token:<userId>` (exemplo)  
+   - TTL sincronizado com `ACCESS_TTL_SECONDS` — o Redis mantém a sessão server-side.
 
-🔁 Renovação
-Refresh Token válido
+3. Validação de rota protegida
+   - Verifica JWT (assinatura e expiração)  
+   - Verifica presença/consistência do token no Redis
 
-Novo Access Token gerado
+4. Renovação (refresh)
+   - `refreshToken` válido gera novo `accessToken` e atualiza o TTL no Redis
 
-Redis atualizado
+5. Logout
+   - Remove a chave do Redis, invalidando a sessão imediatamente
 
-❌ Logout
-Token removido do Redis
+---
 
-Sessão invalidada
+## Observações de segurança e finalidade
 
-📚 Observações
-Projeto com fins educacionais para demonstrar:
+- Este projeto tem caráter educacional, para demonstrar conceitos de autenticação moderna e controle de sessão server-side.
+- Em produção:
+  - Use segredos fortes e armazenamento seguro (ex.: vaults ou variáveis de ambiente gerenciadas).
+  - Considere usar HTTPS, proteção contra CSRF onde aplicável, rate limiting e monitoramento.
+  - Ajuste políticas de expiração e rotação de refresh tokens conforme requisitos de segurança.
+  - Garanta validação e sanitização de entradas de usuário.
 
-Autenticação moderna
+---
 
-Controle de sessão server-side
-
-Uso de Redis como cache
-
-Boas práticas com JWT
+Se quiser, eu posso:
+- Converter este README em um arquivo pronto para commit no repositório,
+- Adicionar badges, ou
+- Expandir a seção de arquitetura com diagramas e exemplos de payloads mais detalhados.
