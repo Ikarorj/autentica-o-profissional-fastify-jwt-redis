@@ -1,4 +1,4 @@
-# 🔐 API de Autenticação com Fastify, JWT e Redis
+# 🔐 Back-end com API de Autenticação com Fastify, JWT e Redis
 
 Uma implementação educativa e profissional de um fluxo de autenticação moderno usando Fastify, JWT (Access + Refresh tokens) e Redis (para sessão server-side). O projeto demonstra geração e renovação de tokens, controle de sessão com TTL, e invalidação de sessão no logout.
 
